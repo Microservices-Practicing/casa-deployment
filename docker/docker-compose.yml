@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+
+   gateway-service:
+     build: ../../gateway-service
+     container_name: gateway-service
+     ports:
+       - "8082:8082"
+     environment:
+       - PROFILE_SERVICE_URL=http://profile-service:8080
+       - OAUTH2_CLIENT_ISSUER_URI=http://host.docker.internal:9000
+
+   profile-service:
+     build: ../../profile-service
+     container_name: profile-service
+     ports:
+       - "8080:8080"
+     env_file:
+       - '.env'
+     environment:
+       - POSTGRES_HOST=casha-profile-database
+       - POSTGRES_DATABASE=cashadb_profile
+     depends_on:
+       - casha-profile-database
+
+   casha-order-database:
+     image: "postgres:14-alpine"
+     container_name: "casha-order-database"
+     ports:
+       - $DB_PORT_POINT:$POSTGRES_PORT_INSIDE
+     env_file:
+       - '.env'
+     environment:
+       - POSTGRES_DB=cashadb_order
+ #    volumes:
+ #      - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+   casha-profile-database:
+     image: "postgres:14-alpine"
+     container_name: "casha-profile-database"
+     ports:
+       - $DB_PORT_PROFILE:$POSTGRES_PORT_INSIDE
+     env_file:
+       - '.env'
+     environment:
+       - POSTGRES_DB=cashadb_profile
+ #    volumes:
+ #      - ./postgresql/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+   casha-redis:
+     image: "redis:7.2"
+     container_name: "casha-redis"
+     ports:
+       - "6379:6379"
